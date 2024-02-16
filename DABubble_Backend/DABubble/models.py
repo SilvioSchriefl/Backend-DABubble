@@ -29,7 +29,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     password_reset_token_used = models.BooleanField(default=False)
     name = models.CharField(max_length=100, default='', blank=False, null=False)
     objects = CustomUserManager()
-    avatar = models.CharField(max_length=100, null=True, blank=True)
+    avatar = models.CharField(max_length=100,  null=True, blank=True)
     USERNAME_FIELD = 'email'
     
     
@@ -46,7 +46,9 @@ class Chat(models.Model):
 
 class Channel(models.Model):
     name = models.CharField(max_length=100)
-    description = models.TextField(null=True)
+    description = models.TextField(null=True, blank=True)
     members = models.ManyToManyField(CustomUser, related_name='channels')  
-    chat = models.ForeignKey(Chat, on_delete=models.CASCADE)  
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, null=True, blank=True)  
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_channels')
+    created_at = models.DateTimeField(auto_now_add=True)
     

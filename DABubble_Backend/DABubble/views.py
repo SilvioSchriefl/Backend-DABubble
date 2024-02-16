@@ -1,10 +1,10 @@
 
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
-from .serializers import RegistrationSerializer, LoginSerializer, CustomUserSerializer
+from .serializers import RegistrationSerializer, LoginSerializer, CustomUserSerializer, ChannelSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from .models import CustomUser
+from .models import CustomUser, Channel
 from django.contrib.auth import authenticate, logout
 from rest_framework.authtoken.models import Token
 
@@ -85,4 +85,30 @@ class LogoutView(APIView):
         else:
             return Response({"detail": "Authentication credentials were not provided."},
                             status=status.HTTP_401_UNAUTHORIZED)
-
+            
+class ChannelsView(APIView):
+    
+    def post(self, request):
+        serializer = ChannelSerializer(data=request.data)
+        if serializer.is_valid():
+            channel_name = request.data.get('name')
+            if Channel.objects.filter(name__iexact=channel_name).exists():
+                    return Response({'error': 'Channel name already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                creator = request.user  
+                serializer.save(creator=creator)
+                member_ids = request.data.get('members', [])
+                channel = serializer.save()
+                channel.members.set(member_ids) 
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def get(self, request):
+        if request.user.is_authenticated:
+            channels = Channel.objects.all()
+            serializer = ChannelSerializer(channels, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
