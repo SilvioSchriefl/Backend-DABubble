@@ -35,21 +35,24 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
     
 class Message(models.Model):
-    chat = models.ForeignKey('Chat', on_delete=models.CASCADE)
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  
     emoji = models.CharField(max_length=100, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)  
+    message = models.CharField(max_length=1000, default='', blank=False, null=False)
+    chat_id = models.IntegerField(default=0)
 
+    
+    
 class Chat(models.Model): 
-    chat_id = models.IntegerField(unique=True) 
-    messages = models.ManyToManyField(Message, related_name='chats')
-   
-
+    messages = models.ManyToManyField(Message, related_name='chats', null=True, blank=True)
+    
+    
 class Channel(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, default='', blank=False, null=False)
     description = models.TextField(null=True, blank=True)
     members = models.ManyToManyField(CustomUser, related_name='channels')  
-    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, null=True, blank=True)  
+    chat = models.OneToOneField('Chat', on_delete=models.CASCADE, related_name='channel', null=True)
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_channels')
     created_at = models.DateTimeField(auto_now_add=True)
+    
     

@@ -1,10 +1,10 @@
 
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
-from .serializers import RegistrationSerializer, LoginSerializer, CustomUserSerializer, ChannelSerializer
+from .serializers import RegistrationSerializer, LoginSerializer, CustomUserSerializer, ChannelSerializer, MessageSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from .models import CustomUser, Channel
+from .models import CustomUser, Channel, Chat, Message
 from django.contrib.auth import authenticate, logout
 from rest_framework.authtoken.models import Token
 
@@ -92,10 +92,12 @@ class ChannelsView(APIView):
         serializer = ChannelSerializer(data=request.data)
         if serializer.is_valid():
             creator = request.user  
-            serializer.save(creator=creator)
+            channel = serializer.save(creator=creator)
+            chat = Chat.objects.create()
             member_ids = request.data.get('members', [])
-            channel = serializer.save()
-            channel.members.set(member_ids) 
+            channel.members.set(member_ids)
+            channel.chat = chat
+            channel.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -131,6 +133,26 @@ class ChannelsView(APIView):
             channel = get_object_or_404(Channel, pk=channel_id)
             channel.delete()
             return Response({'message': 'Channel deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+        
+        
+class MessageView(APIView):
+    
+    def post(self, request):
+        if request.user.is_authenticated:
+            chat_id = request.data.get('chat_id')
+            message_content = request.data.get('message')
+            chat = get_object_or_404(Chat, pk=chat_id)
+            if chat:                         
+                message = Message.objects.create( creator=request.user, message=message_content, chat_id=chat_id)
+                chat.messages.add(message)
+                serializer = MessageSerializer(message)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'error': 'Chat not found.'}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
         

@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from django.urls import path
-from DABubble.views import RegisterView, LoginView, ProfileUpdateAPIView, CustomUserAPIView, LogoutView, GetAllUsersView, ChannelsView
+from DABubble.views import RegisterView, LoginView, ProfileUpdateAPIView, CustomUserAPIView, LogoutView, GetAllUsersView, ChannelsView, MessageView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('log_out/', LogoutView.as_view(), name='log_out'),
     path('get_all_users/', GetAllUsersView.as_view(), name='allusers'),
     path('channel/', ChannelsView.as_view(), name='channel'),
+    path('message/', MessageView.as_view(), name='message'),
 ]

@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from .models import CustomUser, Channel
+from .models import CustomUser, Channel, Message, Chat
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -25,11 +25,42 @@ class CustomUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('is_active', 'name', 'email', 'avatar', 'id',)
         
+        
+class MessageSerializer(serializers.ModelSerializer):
+    
+    creator = CustomUserSerializer(read_only=True)
+    class Meta:
+        model = Message
+        fields = ('message', 'chat_id', 'creator', 'emoji', 'timestamp', 'id')
+        
+        
+class ChatSerializer(serializers.ModelSerializer):
+    
+    messages = MessageSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Chat
+        fields = '__all__'
+        
 class ChannelSerializer(serializers.ModelSerializer):
     
+    chat = ChatSerializer(read_only=True)
     members = CustomUserSerializer(many=True, read_only=True)
     creator = CustomUserSerializer(read_only=True)
     class Meta:
         model = Channel
         fields = ('name', 'description', 'members', 'chat', 'id', 'creator', 'created_at',)
+        
+
+    
+    
+        
+        
+
+
+    
+    
+        
+        
+
         
