@@ -87,20 +87,16 @@ class LogoutView(APIView):
                             status=status.HTTP_401_UNAUTHORIZED)
             
 class ChannelsView(APIView):
-    
+
     def post(self, request):
         serializer = ChannelSerializer(data=request.data)
         if serializer.is_valid():
-            channel_name = request.data.get('name')
-            if Channel.objects.filter(name__iexact=channel_name).exists():
-                    return Response({'error': 'Channel name already exists'}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                creator = request.user  
-                serializer.save(creator=creator)
-                member_ids = request.data.get('members', [])
-                channel = serializer.save()
-                channel.members.set(member_ids) 
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            creator = request.user  
+            serializer.save(creator=creator)
+            member_ids = request.data.get('members', [])
+            channel = serializer.save()
+            channel.members.set(member_ids) 
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -111,4 +107,33 @@ class ChannelsView(APIView):
             return Response(serializer.data)
         else:
             return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+    def patch(self, request):
+        if request.user.is_authenticated: 
+            channel_id = request.data.get('id')
+            channel = get_object_or_404(Channel, pk=channel_id)
+            members_data = request.data.get('members', [])  
+            serializer = ChannelSerializer(instance=channel, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                if members_data is not None:
+                    channel.members.set(members_data)
+                    channel.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+    def delete(self, request):
+        if request.user.is_authenticated:
+            channel_id = request.data.get('id')
+            channel = get_object_or_404(Channel, pk=channel_id)
+            channel.delete()
+            return Response({'message': 'Channel deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+
         

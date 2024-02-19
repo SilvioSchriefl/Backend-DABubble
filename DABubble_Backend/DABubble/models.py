@@ -31,6 +31,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
     avatar = models.CharField(max_length=100,  null=True, blank=True)
     USERNAME_FIELD = 'email'
+    chats = models.ManyToManyField('Chat', related_name='users', null=True, blank=True)
     
     
 class Message(models.Model):
